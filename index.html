@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChronoFocus - Comptes à rebours d'exception</title>
+    <!-- Tailwind CSS pour un design moderne et réactif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti pour la célébration de fin de compte à rebours -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0b0f19;
+            overflow-x: hidden;
+        }
+
+        /* Thèmes animés d'arrière-plan */
+        .theme-stars {
+            background: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #0f172a 100%);
+        }
+        .theme-aurora {
+            background: linear-gradient(135deg, #022c22 0%, #0f172a 50%, #1e1b4b 100%);
+        }
+        .theme-sunset {
+            background: linear-gradient(135deg, #451a03 0%, #1e1b4b 50%, #0f172a 100%);
+        }
+        .theme-cyber {
+            background: linear-gradient(135deg, #111827 0%, #311042 50%, #030712 100%);
+        }
+        .theme-nebula {
+            background: linear-gradient(135deg, #1e1b4b 0%, #581c87 50%, #090514 100%);
+        }
+
+        /* Flou d'arrière-plan premium (Glassmorphism) */
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .glass-hover:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .float-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Personnalisation des barres de défilement */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="theme-stars min-h-screen text-slate-100 flex flex-col transition-all duration-1000">
+
+    <!-- Header / Barre de navigation -->
+    <header class="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center z-10">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="showDashboard()">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                <svg class="w-6 h-6 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <span class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">ChronoFocus</span>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button onclick="openCreator()" class="glass glass-hover px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2">
+                <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Créer un compteur
+            </button>
+        </div>
+    </header>
+
+    <!-- Conteneur principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 md:px-6 py-4 flex flex-col justify-center items-center z-10 relative">
+        
+        <!-- ================= SECTION 1 : TABLEAU DE BORD ================= -->
+        <section id="secDashboard" class="w-full max-w-4xl transition-all duration-500">
+            <div class="mb-8 text-center md:text-left">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-2 tracking-tight">Vos Événements Marquants</h2>
+                <p class="text-slate-400">Gardez un œil sur le temps qu'il reste pour ce qui compte vraiment.</p>
+            </div>
+
+            <!-- Liste des événements -->
+            <div id="eventsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- Les cartes d'événements s'insèrent ici dynamiquement -->
+            </div>
+
+            <!-- État vide si aucun événement -->
+            <div id="emptyState" class="hidden glass rounded-3xl p-12 text-center max-w-lg mx-auto float-animation">
+                <div class="w-16 h-16 bg-slate-800/50 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-slate-700/50">
+                    <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Aucun événement à l'horizon</h3>
+                <p class="text-slate-400 text-sm mb-6 leading-relaxed">Préparez un anniversaire, des vacances, une sortie, ou planifiez le Nouvel An dès aujourd'hui.</p>
+                <button onclick="openCreator()" class="bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 px-6 py-3 rounded-xl font-bold hover:shadow-lg hover:shadow-amber-500/20 active:scale-95 transition-all">
+                    Créer mon premier compte à rebours
+                </button>
+            </div>
+        </section>
+
+        <!-- ================= SECTION 2 : CRÉATEUR / ÉDITEUR ================= -->
+        <section id="secCreator" class="hidden w-full max-w-xl transition-all duration-500">
+            <div class="glass rounded-3xl p-6 md:p-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <h2 id="creatorTitle" class="text-2xl font-extrabold text-white mb-6 flex items-center gap-3">
+                    <span class="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400 text-lg">✦</span>
+                    Nouveau compte à rebours
+                </h2>
+
+                <div class="space-y-5">
+                    <!-- ID Caché pour l'édition -->
+                    <input type="hidden" id="editId">
+
+                    <!-- Nom de l'événement -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Nom de l'événement</label>
+                        <input type="text" id="evName" placeholder="Ex: Concert Rock, Anniversaire de Julia..." class="w-full bg-slate-950/50 border border-slate-800 focus:border-amber-500 rounded-xl px-4 py-3 text-white outline-none transition-all placeholder:text-slate-600">
+                    </div>
+
+                    <!-- Date & Heure -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Date cible</label>
+                            <input type="date" id="evDate" class="w-full bg-slate-950/50 border border-slate-800 focus:border-amber-500 rounded-xl px-4 py-3 text-white outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Heure (Optionnelle)</label>
+                            <input type="time" id="evTime" class="w-full bg-slate-950/50 border border-slate-800 focus:border-amber-500 rounded-xl px-4 py-3 text-white outline-none transition-all">
+                        </div>
+                    </div>
+
+                    <!-- Choix du thème d'arrière-plan -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Thème graphique</label>
+                        <div class="grid grid-cols-5 gap-2" id="themePicker">
+                            <button onclick="selectTheme('stars')" data-theme="stars" class="h-10 rounded-lg theme-stars border-2 border-amber-500 focus:outline-none transition-all relative" title="Étoiles"></button>
+                            <button onclick="selectTheme('aurora')" data-theme="aurora" class="h-10 rounded-lg theme-aurora border-2 border-transparent focus:outline-none transition-all relative" title="Aurore"></button>
+                            <button onclick="selectTheme('sunset')" data-theme="sunset" class="h-10 rounded-lg theme-sunset border-2 border-transparent focus:outline-none transition-all relative" title="Sunset"></button>
+                            <button onclick="selectTheme('cyber')" data-theme="cyber" class="h-10 rounded-lg theme-cyber border-2 border-transparent focus:outline-none transition-all relative" title="Cyberpunk"></button>
+                            <button onclick="selectTheme('nebula')" data-theme="nebula" class="h-10 rounded-lg theme-nebula border-2 border-transparent focus:outline-none transition-all relative" title="Nébuleuse"></button>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                        <button onclick="saveCountdown()" class="flex-1 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 py-3 rounded-xl font-bold hover:shadow-lg hover:shadow-amber-500/20 active:scale-95 transition-all text-center">
+                            Enregistrer
+                        </button>
+                        <button onclick="showDashboard()" class="sm:flex-none px-6 py-3 bg-slate-900 border border-slate-800 text-slate-300 rounded-xl font-semibold hover:bg-slate-800 transition-all">
+                            Annuler
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SECTION 3 : FOCUS COMPTEUR IMMERSIF ================= -->
+        <section id="secFocus" class="hidden w-full max-w-4xl transition-all duration-500">
+            <!-- Bouton Retour rapide -->
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="showDashboard()" class="glass glass-hover px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    Retour aux événements
+                </button>
+                <div class="flex gap-2">
+                    <button id="btnShare" onclick="shareCountdown()" class="glass glass-hover p-2.5 rounded-xl transition-all" title="Copier le lien de partage">
+                        <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 10.742l4.606-2.203M8.684 13.258l4.606 2.203M18.816 7.425a2.5 2.5 0 11-4.99 0 2.5 2.5 0 014.99 0zM18.816 16.575a2.5 2.5 0 11-4.99 0 2.5 2.5 0 014.99 0zM6 13.25a2.5 2.5 0 11-4.99 0 2.5 2.5 0 014.99 0z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Box Focus principale -->
+            <div class="glass rounded-[2.5rem] p-8 md:p-14 text-center relative overflow-hidden float-animation">
+                <div class="absolute -top-10 -left-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <h1 id="focusName" class="text-3xl md:text-5xl font-extrabold tracking-tight mb-2 text-white">...</h1>
+                <div id="focusTargetDate" class="text-sm md:text-base text-slate-400 font-medium mb-12 tracking-wide uppercase">Cargaison en cours...</div>
+
+                <!-- Chiffres principaux -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4 max-w-3xl mx-auto mb-10">
+                    <!-- Jours -->
+                    <div class="bg-slate-950/30 border border-white/5 p-4 md:p-6 rounded-3xl flex flex-col justify-center">
+                        <span id="focusDays" class="text-5xl md:text-7xl font-extrabold bg-gradient-to-tr from-amber-400 to-yellow-200 bg-clip-text text-transparent">--</span>
+                        <span class="text-xs uppercase tracking-widest text-slate-400 font-bold mt-2">Jours</span>
+                    </div>
+                    <!-- Heures -->
+                    <div class="bg-slate-950/30 border border-white/5 p-4 md:p-6 rounded-3xl flex flex-col justify-center">
+                        <span id="focusHours" class="text-5xl md:text-7xl font-extrabold bg-gradient-to-tr from-amber-400 to-yellow-200 bg-clip-text text-transparent">--</span>
+                        <span class="text-xs uppercase tracking-widest text-slate-400 font-bold mt-2">Heures</span>
+                    </div>
+                    <!-- Minutes -->
+                    <div class="bg-slate-950/30 border border-white/5 p-4 md:p-6 rounded-3xl flex flex-col justify-center">
+                        <span id="focusMinutes" class="text-5xl md:text-7xl font-extrabold bg-gradient-to-tr from-amber-400 to-yellow-200 bg-clip-text text-transparent">--</span>
+                        <span class="text-xs uppercase tracking-widest text-slate-400 font-bold mt-2">Minutes</span>
+                    </div>
+                    <!-- Secondes -->
+                    <div class="bg-slate-950/30 border border-white/5 p-4 md:p-6 rounded-3xl flex flex-col justify-center">
+                        <span id="focusSeconds" class="text-5xl md:text-7xl font-extrabold bg-gradient-to-tr from-amber-400 to-yellow-200 bg-clip-text text-transparent">--</span>
+                        <span class="text-xs uppercase tracking-widest text-slate-400 font-bold mt-2">Secondes</span>
+                    </div>
+                </div>
+
+                <!-- Barre de progression de l'événement -->
+                <div class="max-w-2xl mx-auto">
+                    <div class="h-2 w-full bg-slate-900/80 rounded-full overflow-hidden p-[2px] border border-white/5">
+                        <div id="focusBar" class="h-full rounded-full bg-gradient-to-r from-amber-500 to-yellow-300 transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-3 text-xs font-semibold text-slate-400 px-1">
+                        <span id="focusProgressPct">Calcul en cours...</span>
+                        <span id="focusTimeStatus">Temps restant...</span>
+                    </div>
+                </div>
+
+                <!-- Phrase de résumé dynamique -->
+                <p id="focusSummary" class="mt-8 text-slate-300 italic text-sm md:text-base max-w-lg mx-auto leading-relaxed border-t border-white/5 pt-6"></p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Pied de page -->
+    <footer class="w-full max-w-7xl mx-auto px-6 py-6 text-center text-xs text-slate-500 z-10">
+        <p>Créé pour capturer l'impatience de vos moments favoris • ChronoFocus © 2026</p>
+    </footer>
+
+    <!-- Système de Toasts élégant pour remplacer 'alert()' -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <script>
+        // --- CONFIGURATION & GESTION DU STOCKAGE ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-countdown-app';
+        let countdowns = [];
+        let activeTimerId = null;
+        let selectedThemeName = 'stars';
+
+        // Éléments DOM fréquemment utilisés
+        const $ = (id) => document.getElementById(id);
+        const sections = {
+            dashboard: $('secDashboard'),
+            creator: $('secCreator'),
+            focus: $('secFocus')
+        };
+
+        // Écouter les chargements de page pour décoder des liens de partage éventuels
+        window.onload = function() {
+            loadCountdowns();
+            
+            // Vérifier s'il y a des données de partage dans l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const sharedData = urlParams.get('shared');
+            if (sharedData) {
+                try {
+                    const decoded = JSON.parse(atob(sharedData));
+                    if (decoded && decoded.name && decoded.date) {
+                        // C'est un compte à rebours partagé! On l'ajoute temporairement et on le focus
+                        const sharedEvent = {
+                            id: 'shared-' + Date.now(),
+                            name: decoded.name,
+                            date: decoded.date,
+                            time: decoded.time || '',
+                            theme: decoded.theme || 'stars',
+                            created: decoded.created || Date.now() - 3600000 // Défaut 1h de passé
+                        };
+                        
+                        // Ajouter à la liste locale si non existant ou le pousser en tête
+                        countdowns.unshift(sharedEvent);
+                        saveToStorage();
+                        showToast("Événement partagé importé avec succès ! ✨");
+                        
+                        // Nettoyer l'URL sans recharger
+                        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                        window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+
+                        renderDashboard();
+                        viewFocus(sharedEvent.id);
+                        return;
+                    }
+                } catch (e) {
+                    showToast("Impossible de charger le compte à rebours partagé.", "error");
+                }
+            }
+
+            renderDashboard();
+        };
+
+        // --- NAVIGATION INTERNE ---
+        function switchSection(targetKey) {
+            Object.keys(sections).forEach(key => {
+                if (key === targetKey) {
+                    sections[key].classList.remove('hidden');
+                } else {
+                    sections[key].classList.add('hidden');
+                }
+            });
+            // Réinitialiser le timer actif s'il n'est pas utilisé dans le focus
+            if (targetKey !== 'focus' && activeTimerId) {
+                clearInterval(activeTimerId);
+                activeTimerId = null;
+            }
+        }
+
+        function showDashboard() {
+            switchSection('dashboard');
+            applyThemeBackground('stars'); // Thème neutre pour le Dashboard
+            renderDashboard();
+        }
+
+        function openCreator(id = '') {
+            switchSection('creator');
+            
+            if (id) {
+                // Mode Édition
+                $('creatorTitle').innerHTML = '<span class="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400 text-lg">⚙️</span>Modifier le compte à rebours';
+                const event = countdowns.find(c => c.id === id);
+                if (event) {
+                    $('editId').value = event.id;
+                    $('evName').value = event.name;
+                    $('evDate').value = event.date;
+                    $('evTime').value = event.time;
+                    selectTheme(event.theme);
+                }
+            } else {
+                // Mode Création
+                $('creatorTitle').innerHTML = '<span class="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400 text-lg">✦</span>Nouveau compte à rebours';
+                $('editId').value = '';
+                $('evName').value = '';
+                
+                // Configurer la date de demain par défaut
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                $('evDate').value = tomorrow.toISOString().split('T')[0];
+                $('evTime').value = '12:00';
+                selectTheme('stars');
+            }
+        }
+
+        // --- THEMES ---
+        function selectTheme(themeName) {
+            selectedThemeName = themeName;
+            const buttons = $('themePicker').querySelectorAll('button');
+            buttons.forEach(btn => {
+                if (btn.dataset.theme === themeName) {
+                    btn.classList.add('border-amber-500');
+                    btn.classList.remove('border-transparent');
+                } else {
+                    btn.classList.remove('border-amber-500');
+                    btn.classList.add('border-transparent');
+                }
+            });
+            applyThemeBackground(themeName);
+        }
+
+        function applyThemeBackground(themeName) {
+            document.body.className = `min-h-screen text-slate-100 flex flex-col transition-all duration-1000 theme-${themeName}`;
+        }
+
+        // --- COMPORTEMENT LOCAL STORAGE ---
+        function loadCountdowns() {
+            try {
+                const data = localStorage.getItem(`chronofocus_${appId}`);
+                countdowns = data ? JSON.parse(data) : [];
+            } catch(e) {
+                countdowns = [];
+            }
+        }
+
+        function saveToStorage() {
+            try {
+                localStorage.setItem(`chronofocus_${appId}`, JSON.stringify(countdowns));
+            } catch(e) {
+                showToast("Erreur d'écriture dans le stockage local", "error");
+            }
+        }
+
+        // --- ACTIONS CRUD ---
+        function saveCountdown() {
+            const name = $('evName').value.trim();
+            const date = $('evDate').value;
+            const time = $('evTime').value;
+            const editId = $('editId').value;
+
+            if (!name) {
+                showToast("Veuillez indiquer un titre pour votre événement.", "error");
+                return;
+            }
+            if (!date) {
+                showToast("La date de l'événement est obligatoire.", "error");
+                return;
+            }
+
+            const targetStr = time ? `${date}T${time}` : date;
+            const targetDate = new Date(targetStr);
+            if (isNaN(targetDate.getTime())) {
+                showToast("La date ou l'heure fournie est invalide.", "error");
+                return;
+            }
+
+            if (editId) {
+                // Modification
+                const idx = countdowns.findIndex(c => c.id === editId);
+                if (idx !== -1) {
+                    countdowns[idx].name = name;
+                    countdowns[idx].date = date;
+                    countdowns[idx].time = time;
+                    countdowns[idx].theme = selectedThemeName;
+                    showToast("Compte à rebours mis à jour ! 💾");
+                }
+            } else {
+                // Création
+                const newEvent = {
+                    id: 'ev-' + Date.now(),
+                    name: name,
+                    date: date,
+                    time: time,
+                    theme: selectedThemeName,
+                    created: Date.now()
+                };
+                countdowns.push(newEvent);
+                showToast("Nouveau compte à rebours sauvegardé ! 🚀");
+            }
+
+            saveToStorage();
+            showDashboard();
+        }
+
+        function deleteCountdown(id, event) {
+            if (event) event.stopPropagation(); // Éviter d'ouvrir le focus en cliquant sur supprimer
+            
+            // On demande confirmation via une boîte personnalisée, pas de confirm()
+            if (confirm("Voulez-vous vraiment supprimer ce compte à rebours ?")) {
+                countdowns = countdowns.filter(c => c.id !== id);
+                saveToStorage();
+                renderDashboard();
+                showToast("Événement supprimé.");
+            }
+        }
+
+        // --- RENDU DU DASHBOARD ---
+        function renderDashboard() {
+            const grid = $('eventsGrid');
+            const emptyState = $('emptyState');
+            grid.innerHTML = '';
+
+            if (countdowns.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            grid.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            countdowns.forEach(item => {
+                const targetStr = item.time ? `${item.date}T${item.time}` : item.date;
+                const target = new Date(targetStr);
+                const now = new Date();
+                const diff = target - now;
+                const isPast = diff <= 0;
+
+                // Formater la date en français
+                const formattedDate = target.toLocaleDateString('fr-FR', {
+                    day: 'numeric', month: 'long', year: 'numeric', hour: item.time ? '2-digit' : undefined, minute: item.time ? '2-digit' : undefined
+                });
+
+                let statusText = "";
+                let cardClass = "relative glass glass-hover p-6 rounded-2xl cursor-pointer transition-all duration-300 flex flex-col justify-between overflow-hidden group";
+                
+                if (isPast) {
+                    statusText = "Terminé / Passé";
+                    cardClass += " opacity-70 border-red-500/20";
+                } else {
+                    const days = Math.floor(diff / 86400000);
+                    const hours = Math.floor((diff % 86400000) / 3600000);
+                    
+                    if (days > 0) {
+                        statusText = `Dans ${days}j ${hours}h`;
+                    } else if (hours > 0) {
+                        statusText = `Dans ${hours}h`;
+                    } else {
+                        const mins = Math.max(1, Math.floor((diff % 3600000) / 60000));
+                        statusText = `Dans ${mins} min`;
+                    }
+                }
+
+                // Aperçu visuel du thème de la carte
+                let borderIndicator = "bg-slate-700";
+                if (item.theme === 'aurora') borderIndicator = "bg-emerald-500";
+                else if (item.theme === 'sunset') borderIndicator = "bg-orange-500";
+                else if (item.theme === 'cyber') borderIndicator = "bg-purple-500";
+                else if (item.theme === 'nebula') borderIndicator = "bg-violet-600";
+                else if (item.theme === 'stars') borderIndicator = "bg-amber-500";
+
+                const card = document.createElement('div');
+                card.className = cardClass;
+                card.onclick = () => viewFocus(item.id);
+                card.innerHTML = `
+                    <div class="absolute top-0 left-0 w-2 h-full ${borderIndicator}"></div>
+                    <div class="flex justify-between items-start mb-4 pl-2">
+                        <div>
+                            <span class="text-xs font-semibold px-2 py-1 rounded-md bg-white/5 text-slate-300 border border-white/5">${statusText}</span>
+                        </div>
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="event.stopPropagation(); openCreator('${item.id}')" class="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors" title="Modifier">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                            <button onclick="deleteCountdown('${item.id}', event)" class="p-1.5 hover:bg-red-500/20 rounded-lg text-red-400 hover:text-red-300 transition-colors" title="Supprimer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="pl-2">
+                        <h3 class="text-xl font-bold text-white mb-1 group-hover:text-amber-400 transition-colors line-clamp-1">${escapeHtml(item.name)}</h3>
+                        <p class="text-xs text-slate-400">${formattedDate}</p>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- LOGIQUE ACTIVE DE COMPTE À REBOURS (FOCUS) ---
+        function viewFocus(id) {
+            const item = countdowns.find(c => c.id === id);
+            if (!item) return;
+
+            switchSection('focus');
+            applyThemeBackground(item.theme);
+
+            $('focusName').textContent = item.name;
+            
+            const targetStr = item.time ? `${item.date}T${item.time}` : item.date;
+            const target = new Date(targetStr);
+            
+            // Format d'affichage de la date cible
+            const formatted = target.toLocaleDateString('fr-FR', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: item.time ? '2-digit' : undefined, minute: item.time ? '2-digit' : undefined
+            });
+            $('focusTargetDate').textContent = `Échéance : ${formatted}`;
+
+            // Bouton de partage mis à jour pour cet événement précis
+            $('btnShare').onclick = () => shareCountdown(item);
+
+            let triggeredConfetti = false;
+
+            function runTick() {
+                const now = new Date();
+                const diff = target - now;
+
+                // Calcul du pourcentage de progression par rapport à la date de création de l'événement
+                const totalDuration = target.getTime() - item.created;
+                const elapsed = now.getTime() - item.created;
+                let pct = 0;
+                
+                if (totalDuration > 0) {
+                    pct = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+                }
+
+                if (diff <= 0) {
+                    // Événement dépassé
+                    const absDiff = Math.abs(diff);
+                    const d = Math.floor(absDiff / 86400000);
+                    const h = Math.floor((absDiff % 86400000) / 3600000);
+                    const m = Math.floor((absDiff % 3600000) / 60000);
+                    const s = Math.floor((absDiff % 60000) / 1000);
+
+                    $('focusDays').textContent = d;
+                    $('focusHours').textContent = pad(h);
+                    $('focusMinutes').textContent = pad(m);
+                    $('focusSeconds').textContent = pad(s);
+
+                    $('focusBar').style.width = '100%';
+                    $('focusProgressPct').textContent = "Terminé ! 🎉";
+                    $('focusTimeStatus').textContent = "Événement passé";
+                    $('focusSummary').innerHTML = `<span class="text-red-400 font-semibold">L'événement est passé depuis</span><br>${d} jours, ${h}h ${m}m et ${s}s.`;
+
+                    // Déclenchement unique de confettis si l'événement vient de se terminer à l'instant
+                    if (!triggeredConfetti && absDiff < 10000) { 
+                        triggerCelebration();
+                        triggeredConfetti = true;
+                    }
+                    return;
+                }
+
+                // Événement futur
+                const d = Math.floor(diff / 86400000);
+                const h = Math.floor((diff % 86400000) / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                
+                // Calcul des heures totales restantes
+                const totalHours = Math.floor(diff / 3600000);
+
+                $('focusDays').textContent = d;
+                $('focusHours').textContent = pad(h);
+                $('focusMinutes').textContent = pad(m);
+                $('focusSeconds').textContent = pad(s);
+
+                $('focusBar').style.width = `${pct}%`;
+                $('focusProgressPct').textContent = `${pct.toFixed(1)}% du temps écoulé`;
+                $('focusTimeStatus').textContent = `${totalHours.toLocaleString()}h restantes`;
+
+                let summary = `Encore un peu de patience ! Il reste précisément ${d} jour${d > 1 ? 's' : ''}`;
+                if (h > 0 || m > 0 || s > 0) {
+                    summary += `, ${h} heure${h > 1 ? 's' : ''}, ${m} minute${m > 1 ? 's' : ''} et ${s} seconde${s > 1 ? 's' : ''}`;
+                }
+                summary += ` (soit un total de ${totalHours.toLocaleString()} heures) pour se préparer.`;
+                $('focusSummary').textContent = summary;
+            }
+
+            runTick();
+            if (activeTimerId) clearInterval(activeTimerId);
+            activeTimerId = setInterval(runTick, 1000);
+        }
+
+        // --- PARTAGE D'ÉVÉNEMENT ---
+        function shareCountdown(item) {
+            if (!item) return;
+
+            // Formuler un objet de transfert plus léger
+            const shareObj = {
+                name: item.name,
+                date: item.date,
+                time: item.time,
+                theme: item.theme,
+                created: item.created
+            };
+
+            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(shareObj))));
+            const shareUrl = `${window.location.origin}${window.location.pathname}?shared=${encoded}`;
+
+            // Copie de secours compatible Iframe
+            const tempInput = document.createElement("textarea");
+            tempInput.value = shareUrl;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            
+            try {
+                document.execCommand("copy");
+                showToast("Lien de partage copié dans le presse-papier ! 🔗");
+            } catch (err) {
+                showToast("Erreur de copie automatique. Veuillez copier le lien manuellement.", "error");
+                console.log(shareUrl);
+            }
+            document.body.removeChild(tempInput);
+        }
+
+        // --- EFFETS ET UTILS ---
+        function pad(n) {
+            return String(n).padStart(2, '0');
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function triggerCelebration() {
+            confetti({
+                particleCount: 150,
+                spread: 80,
+                origin: { y: 0.6 }
+            });
+        }
+
+        // Système de notification Toast sur mesure
+        function showToast(message, type = "success") {
+            const container = $('toastContainer');
+            const toast = document.createElement('div');
+            
+            let bgClass = "bg-slate-900 border-emerald-500/30 text-slate-100";
+            let icon = "✓";
+            
+            if (type === "error") {
+                bgClass = "bg-slate-900 border-red-500/30 text-red-200";
+                icon = "✕";
+            }
+
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl border shadow-2xl transition-all duration-300 translate-y-2 opacity-0 glass ${bgClass} pointer-events-auto`;
+            toast.innerHTML = `
+                <span class="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">${icon}</span>
+                <span class="text-xs font-semibold">${message}</span>
+            `;
+
+            container.appendChild(toast);
+
+            // Déclencher l'animation
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            // Nettoyer après 4 secondes
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
